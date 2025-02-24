@@ -17,6 +17,7 @@ builder.Services.AddBlazorBootstrap();
 
 builder.Services.AddScoped<IRoomDatalayer, RoomDatalayer>();
 builder.Services.AddScoped<IMeasuresDatalayer, MeasuresDatalayer>();
+builder.Services.AddScoped<IAlertDatalayer, AlertDatalayer>();
 
 builder.Services.Configure<AppMeteo.Models.Internals.Config>(builder.Configuration.GetSection("Config"));
 

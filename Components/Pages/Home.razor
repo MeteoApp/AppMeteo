@@ -2,6 +2,9 @@
 
 @using AppMeteo.Models
 @using Alert = AppMeteo.Models.Alert
+@using AppMeteo.Services.Interfaces
+
+@inject IAlertDatalayer _alertDatalayer
 
 <PageTitle>Home</PageTitle>
 
@@ -13,16 +16,14 @@
         <table class="table table-striped table-bordered table-hover">
             <thead class="thead-dark">
                 <tr>
-                    <th>ID</th>
                     <th>Pièce</th>
                     <th>Description</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var alerte in alertes)
+                @foreach (Alert alerte in alertes)
                 {
                     <tr>
-                        <td>@alerte.AlertId</td>
                         <td>@alerte.Measure.Room.RoomName</td>
                         <td>@alerte.AlertMessage</td>
                     </tr>
@@ -30,34 +31,16 @@
             </tbody>
         </table>
     </div>
-    <div class="dashboard-item">
-        <h3>Température la plus haute</h3>
-        <p>25°C</p>
-    </div>
-    <!-- Ajoutez plus d'éléments de tableau de bord ici -->
 </div>
-<!-- Fin du tableau de bord -->
 
 @code {
-    private List<Alert> alertes = new List<Alert>();
+    private List<Alert?> alertes = new List<Alert?>();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        alertes.Add(new Alert {
-            AlertId = 1,
-            AlertMessage = "Alerte 1",
-            Measure = new Measure() {
-                MeasureId = 1,
-                Temperature = 25,
-                Humidity = 50,
-                Date = DateTime.Now,
-                Pressure = 1013,
-                Room = new Room() {
-                    RoomId = 1,
-                    RoomName = "Chambre 1",
-                }
-            },
-        });
+        alertes = await _alertDatalayer.GetAllAlerts();
+
+        await base.OnInitializedAsync();
     }
 }
 
@@ -77,6 +60,7 @@
 
     .thead-dark th {
         background-color: #343a40;
+    using AppMeteo.Services.Interfaces;
         color: white;
     }
 </style>

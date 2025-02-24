@@ -52,7 +52,7 @@ namespace AppMeteo.Services.Datalayers
             }
             else
             {
-                throw new Exception($"Erreur lors de la suppression de la pièce : {response.StatusCode}");
+                throw new Exception($"Erreur lors de la suppression de la pièce : {response.Content.ReadAsStringAsync().Result}");
             }
         }
 

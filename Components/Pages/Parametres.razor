@@ -1,64 +1,114 @@
 ﻿@page "/parametres"
-@attribute [StreamRendering]
+@using AppMeteo.Models
+@using AppMeteo.Services.Interfaces
 
-<PageTitle>Weather</PageTitle>
+@inject IRoomDatalayer _roomDatalayer
+@inject ToastService ToastService
 
-<h1>Weather</h1>
+<PageTitle>Paramètres</PageTitle>
 
-<p>This component demonstrates showing data.</p>
+<div class="dashboard container">
+    <h2 class="my-4">Paramètres</h2>
+    <div class="dashboard-item border p-3 mb-4">
+        <h3>Configuration des pièces</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Liste des pièces</h6>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (Room item in rooms)
+                        {
+                            <tr>
+                                <td>@item.RoomName</td>
+                                <td>
+                                    <Button Color="ButtonColor.Danger" @onclick="() => DeleteRoom(item)">
+                                        <Icon Name="IconName.Trash" />
+                                    </Button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
 
-@if (forecasts == null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Temp. (C)</th>
-                <th>Temp. (F)</th>
-                <th>Summary</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var forecast in forecasts)
-            {
-                <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+            <div class="col-md-6">
+                <h6>Ajouter une pièce</h6>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" @bind="newRoom.RoomName" placeholder="Nom de la pièce" />
+                    <div class="input-group-append">
+                        <Button Color="ButtonColor.Primary" @onclick=AddRoom>Ajouter</Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
-    private WeatherForecast[]? forecasts;
+    private List<Room> rooms = new List<Room>();
+    private Room newRoom = new Room();
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate asynchronous loading to demonstrate streaming rendering
-        await Task.Delay(500);
+        rooms = await _roomDatalayer.GetAllRooms();
 
-        var startDate = DateOnly.FromDateTime(DateTime.Now);
-        var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
-        forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
-        {
-            Date = startDate.AddDays(index),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = summaries[Random.Shared.Next(summaries.Length)]
-        }).ToArray();
+        await base.OnInitializedAsync();
     }
 
-    private class WeatherForecast
+    private async Task AddRoom()
     {
-        public DateOnly Date { get; set; }
-        public int TemperatureC { get; set; }
-        public string? Summary { get; set; }
-        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+        await _roomDatalayer.AddRoom(newRoom);
+        rooms = await _roomDatalayer.GetAllRooms();
+    }
+
+    private async Task DeleteRoom(Room room)
+    {
+        try
+        {
+            await _roomDatalayer.DeleteRoom(room.RoomId);
+        
+            rooms = await _roomDatalayer.GetAllRooms();
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new()
+                {
+                    Type = ToastType.Danger,
+                    Title = "Erreur",
+                    Message = ex.Message,
+                    AutoHide = true
+                });
+        }
+        
     }
 }
+
+<style>
+    .dashboard {
+        margin-top: 20px;
+    }
+
+    .dashboard-item {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 20px;
+    }
+
+    .table thead th {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        border-radius: 0.2rem;
+    }
+</style>

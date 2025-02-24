@@ -8,7 +8,7 @@ namespace AppMeteo.Services.Interfaces
         /// Get all alerts
         /// </summary>
         /// <returns></returns>
-        Task<IEnumerable<Alert>> GetAllAlerts();
+        Task<List<Alert>> GetAllAlerts();
 
         /// <summary>
         /// Get alert by id
