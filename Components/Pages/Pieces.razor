@@ -1,0 +1,98 @@
+﻿@page "/pieces"
+@using AppMeteo.Models
+@using AppMeteo.Services.Interfaces
+
+@inject PreloadService PreloadService
+@inject IMeasuresDatalayer _measuresDatalayer
+@inject ToastService ToastService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Liste des pièces</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Liste des pièces</h1>
+            <div class="row">
+                @foreach (var measure in measures)
+                {
+                    <div class="col-md-4">
+                        <Card Class="mb-4 shadow-sm" Style="width: 100%;" @onclick="() => NavigateToDetails(measure.Room.RoomId)">
+                            <CardBody>
+                                <CardTitle>
+                                    @measure.Room.RoomName
+                                </CardTitle>
+                                <CardText>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">Date : @measure.Date.ToString("dd/MM/yyyy HH:mm")</li>
+                                        <li class="list-group-item">Température : @measure.Temperature °C</li>
+                                        <li class="list-group-item">Humidité : @measure.Humidity %</li>
+                                    </ul>
+                                </CardText>
+                            </CardBody>
+                        </Card>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Measure> measures = new List<Measure>();
+
+    protected async override Task OnInitializedAsync()
+    {
+        measures = await _measuresDatalayer.GetLastMeasureInRoom();
+
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            if (firstRender)
+            {
+                PreloadService.Show(SpinnerColor.Light, "Chargement des données...");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new()
+            {
+                Type = ToastType.Danger,
+                Title = "Erreur",
+                Message = ex.Message,
+                AutoHide = true
+            });
+        }
+        finally
+        {
+            PreloadService.Hide();
+            await base.OnAfterRenderAsync(firstRender);
+        }
+    }
+
+    private void NavigateToDetails(int roomId)
+    {
+        NavigationManager.NavigateTo($"/details/{roomId}");
+    }
+}
+
+<style>
+    .card {
+        border-radius: 10px;
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+
+    .card:hover {
+        transform: scale(1.05);
+    }
+
+    .card-title {
+        font-weight: bold;
+        color: #007bff;
+    }
+</style>
